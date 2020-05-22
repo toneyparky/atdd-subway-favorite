@@ -17,6 +17,8 @@ import org.springframework.web.filter.ShallowEtagHeaderFilter;
 import wooteco.subway.doc.MemberDocumentation;
 import wooteco.subway.domain.member.Member;
 import wooteco.subway.service.member.MemberService;
+import wooteco.subway.web.member.interceptor.BearerAuthInterceptor;
+import wooteco.subway.web.member.interceptor.SessionInterceptor;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -36,13 +38,20 @@ public class MemberControllerTest {
 	@MockBean
 	protected MemberService memberService;
 
+	@MockBean
+	protected BearerAuthInterceptor bearerAuthInterceptor;
+
+	@MockBean
+	protected SessionInterceptor sessionInterceptor;
+
 	@Autowired
 	protected MockMvc mockMvc;
 
 	@BeforeEach
 	public void setUp(WebApplicationContext webApplicationContext, RestDocumentationContextProvider restDocumentation) {
-		this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
-				.addFilter(new ShallowEtagHeaderFilter())
+		this.mockMvc = MockMvcBuilders
+				.webAppContextSetup(webApplicationContext)
+				.addFilter(new ShallowEtagHeaderFilter()).alwaysDo(print()) // TODO: 2020/05/21 개꿀
 				.apply(documentationConfiguration(restDocumentation))
 				.build();
 	}
@@ -70,7 +79,12 @@ public class MemberControllerTest {
 		Member member = new Member(1L, TEST_USER_EMAIL, TEST_USER_NAME, TEST_USER_PASSWORD);
 		given(memberService.findMemberByEmail(any())).willReturn(member);
 
+		String token = "bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJicm93bkBlbWFpbC5jb20iLCJpYXQiOjE1OTAwNTA1NjMsImV4cCI6MTU5MDA1NDE2M30.bPh4VZcEj7aYlXDBP_o-1IqZw5AoKCIetrHvI7OcB_k";
+		String session = "83C9D0BE28F5F940ECD3FFBCD0ED73DD";
+
 		this.mockMvc.perform(get("/members?email=" + TEST_USER_EMAIL)
+				.header("authorization", token)
+				.header("cookies", "JSESSIONID=" + session)
 				.accept(MediaType.APPLICATION_JSON)
 				.contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
@@ -82,6 +96,8 @@ public class MemberControllerTest {
 	@Test
 	public void updateMember() throws Exception {
 		doNothing().when(memberService).updateMember(any(), any());
+		given(bearerAuthInterceptor.preHandle(any(), any(), any())).willReturn(true);
+		given(sessionInterceptor.preHandle(any(), any(), any())).willReturn(true);
 
 		String inputJson = "{" +
 				"\"name\":\"" + TEST_USER_NAME + "\"," +

@@ -7,6 +7,7 @@ import wooteco.subway.service.member.MemberService;
 import wooteco.subway.service.member.dto.MemberRequest;
 import wooteco.subway.service.member.dto.MemberResponse;
 import wooteco.subway.service.member.dto.UpdateMemberRequest;
+import wooteco.subway.web.member.aspect.NoValidate;
 
 import java.net.URI;
 
@@ -18,6 +19,7 @@ public class MemberController {
         this.memberService = memberService;
     }
 
+    @NoValidate
     @PostMapping("/members")
     public ResponseEntity createMember(@RequestBody MemberRequest view) {
         Member member = memberService.createMember(view.toMember());
