@@ -1,5 +1,7 @@
 # 1단계 - 회원관리 기능
 
+https://travis-ci.com/toneyparky/atdd-subway-favorite.svg?branch=toan
+
 ## 요구 사항
 
 - 회원 정보를 관리하는 기능 구현
